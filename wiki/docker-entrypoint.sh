@@ -41,6 +41,7 @@ done
 
 if [ ! -f "$LOCAL_SETTINGS" ]; then
   echo "Installing MediaWiki and creating the initial admin account..."
+  install_password="$(php -r 'echo bin2hex(random_bytes(20));')"
   php maintenance/install.php \
     --dbtype=mysql \
     --dbserver="${MEDIAWIKI_DB_HOST}" \
@@ -49,7 +50,7 @@ if [ ! -f "$LOCAL_SETTINGS" ]; then
     --dbpass="${MEDIAWIKI_DB_PASSWORD}" \
     --server="${MEDIAWIKI_SERVER}" \
     --scriptpath="${MEDIAWIKI_SCRIPT_PATH:-/wiki}" \
-    --pass="${MEDIAWIKI_ADMIN_PASSWORD}" \
+    --pass="${install_password}" \
     --confpath="$DATA_DIR" \
     "${MEDIAWIKI_SITE_NAME:-KorewaDiscord Underground Wiki}" \
     "${MEDIAWIKI_ADMIN_USER}"
@@ -65,5 +66,9 @@ fi
 ln -sf "$LOCAL_SETTINGS" "$HTML_SETTINGS"
 
 php maintenance/update.php --quick --skip-external-dependencies
+
+php maintenance/changePassword.php \
+  --user="${MEDIAWIKI_ADMIN_USER}" \
+  --password="${MEDIAWIKI_ADMIN_PASSWORD}"
 
 exec "$@"

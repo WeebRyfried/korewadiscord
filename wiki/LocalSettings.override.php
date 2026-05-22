@@ -25,6 +25,15 @@ $wgEnableUploads = true;
 $wgUseImageMagick = false;
 $wgEmailConfirmToEdit = false;
 
+$passwordPolicyGroups = [ 'bureaucrat', 'sysop', 'interface-admin', 'bot', 'default' ];
+foreach ( $passwordPolicyGroups as $groupName ) {
+	$wgPasswordPolicy['policies'][$groupName]['MinimalPasswordLength'] = 1;
+	$wgPasswordPolicy['policies'][$groupName]['MinimumPasswordLengthToLogin'] = 1;
+	$wgPasswordPolicy['policies'][$groupName]['PasswordCannotBeSubstringInUsername'] = false;
+	$wgPasswordPolicy['policies'][$groupName]['PasswordCannotMatchDefaults'] = false;
+	$wgPasswordPolicy['policies'][$groupName]['PasswordNotInCommonList'] = false;
+}
+
 $wgDefaultSkin = 'vector';
 $wgAllowUserSkin = true;
 
