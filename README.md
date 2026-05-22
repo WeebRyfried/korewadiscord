@@ -178,8 +178,9 @@ In Cloudflare for `korewadiscord.com`:
 
 1. Create an `A` record named `underground` pointing to the VPS public IPv4 address.
 2. Turn on the orange-cloud proxy for the record.
-3. Set SSL/TLS mode to `Full` or `Full (strict)` if you install a trusted certificate on the VPS.
-4. Keep host Nginx listening on origin port `80`, with Docker Nginx bound privately through `NGINX_HTTP_BIND=127.0.0.1:8088` on the VPS.
+3. For the current HTTP-only origin, set SSL/TLS mode to `Flexible` so visitors use HTTPS through Cloudflare while Cloudflare connects to VPS port `80`.
+4. For stronger origin encryption later, install a valid origin certificate and HTTPS listener on the VPS, then switch Cloudflare SSL/TLS mode to `Full` or `Full (strict)`.
+5. Keep host Nginx listening on origin port `80`, with Docker Nginx bound privately through `NGINX_HTTP_BIND=127.0.0.1:8088` on the VPS.
 
 Optional API helper:
 
