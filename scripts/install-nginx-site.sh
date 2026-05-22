@@ -6,6 +6,11 @@ UPSTREAM="${UPSTREAM:-http://127.0.0.1:8088}"
 SITE_NAME="${SITE_NAME:-korewadiscord}"
 
 sudo tee "/etc/nginx/sites-available/${SITE_NAME}.conf" > /dev/null <<NGINX
+map \$http_x_forwarded_proto \$korewa_forwarded_proto {
+    default \$http_x_forwarded_proto;
+    "" \$scheme;
+}
+
 server {
     listen 80;
     listen [::]:80;
@@ -17,7 +22,7 @@ server {
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Proto \$korewa_forwarded_proto;
         proxy_set_header X-Forwarded-Host \$host;
         proxy_pass ${UPSTREAM};
         proxy_read_timeout 120s;
