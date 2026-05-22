@@ -176,11 +176,27 @@ docker compose up -d
 
 In Cloudflare for `korewadiscord.com`:
 
+The live deployment uses Cloudflare Tunnel because the VPS is reachable over SSH through Tailscale while public inbound HTTP to the VM is not available.
+
+1. Create a Cloudflare Tunnel for the hostname `underground.korewadiscord.com`.
+2. Route the tunnel ingress to `http://localhost:80` on the VPS.
+3. Create a proxied `CNAME` record named `underground` pointing to `<tunnel-id>.cfargotunnel.com`.
+4. Keep host Nginx listening on origin port `80`, with Docker Nginx bound privately through `NGINX_HTTP_BIND=127.0.0.1:8088` on the VPS.
+5. Run `cloudflared` as a systemd service on the VPS so the tunnel reconnects after reboot.
+
+Useful tunnel service commands on the VPS:
+
+```bash
+sudo systemctl status cloudflared-korewadiscord
+sudo journalctl -u cloudflared-korewadiscord -f
+sudo systemctl restart cloudflared-korewadiscord
+```
+
+If your VPS has a directly reachable public IPv4 address instead, you can use a proxied `A` record:
+
 1. Create an `A` record named `underground` pointing to the VPS public IPv4 address.
 2. Turn on the orange-cloud proxy for the record.
-3. For the current HTTP-only origin, set SSL/TLS mode to `Flexible` so visitors use HTTPS through Cloudflare while Cloudflare connects to VPS port `80`.
-4. For stronger origin encryption later, install a valid origin certificate and HTTPS listener on the VPS, then switch Cloudflare SSL/TLS mode to `Full` or `Full (strict)`.
-5. Keep host Nginx listening on origin port `80`, with Docker Nginx bound privately through `NGINX_HTTP_BIND=127.0.0.1:8088` on the VPS.
+3. Use Cloudflare SSL/TLS mode appropriate for your origin listener. For an HTTP-only origin use `Flexible`; for an HTTPS origin with a valid certificate use `Full (strict)`.
 
 Optional API helper:
 

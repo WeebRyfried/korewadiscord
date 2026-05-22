@@ -15,6 +15,7 @@ server {
     listen 80;
     listen [::]:80;
     server_name ${DOMAIN};
+    absolute_redirect off;
 
     client_max_body_size 64m;
 
