@@ -1,0 +1,50 @@
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Manage tests</h1>
+  </div>
+  <a class="button secondary" href="<%= url('/admin') %>">Dashboard</a>
+</section>
+
+<section class="quick-actions">
+  <form method="post" action="<%= url('/admin/tests') %>" class="inline-create">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="title" type="text" placeholder="New test title" required>
+    <button class="button" type="submit">Create test</button>
+  </form>
+</section>
+
+<section class="table-panel">
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Questions</th>
+        <th>Status</th>
+        <th>Updated</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% tests.forEach((test) => { %>
+        <tr>
+          <td>
+            <strong><%= test.title %></strong>
+            <span class="row-note"><%= test.description %></span>
+          </td>
+          <td><%= test.question_count %></td>
+          <td><span class="status <%= test.status.toLowerCase() %>"><%= test.status %></span></td>
+          <td><%= test.updated_at %></td>
+          <td class="actions action-stack">
+            <a class="button small" href="<%= url(`/admin/tests/${test.id}/edit`) %>">Edit</a>
+            <form method="post" action="<%= url(`/admin/tests/${test.id}/status`) %>">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="status" value="<%= test.status === 'OPENED' ? 'CLOSED' : 'OPENED' %>">
+              <button class="button small secondary" type="submit"><%= test.status === 'OPENED' ? 'Close' : 'Open' %></button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>

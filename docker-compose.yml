@@ -1,0 +1,81 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - exam
+      - mediawiki
+    ports:
+      - "${NGINX_HTTP_BIND:-80}:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+  exam:
+    build:
+      context: ./exam
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      BASE_PATH: /exam
+      EXAM_DB_PATH: /app/data/exam.sqlite
+      EXAM_ADMIN_USER: ${EXAM_ADMIN_USER:?set EXAM_ADMIN_USER in .env}
+      EXAM_ADMIN_PASSWORD: ${EXAM_ADMIN_PASSWORD:?set EXAM_ADMIN_PASSWORD in .env}
+      EXAM_SESSION_SECRET: ${EXAM_SESSION_SECRET:?set EXAM_SESSION_SECRET in .env}
+      EXAM_COOKIE_SECURE: ${EXAM_COOKIE_SECURE:-false}
+    volumes:
+      - exam_data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  mediawiki-db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MEDIAWIKI_DB_NAME:?set MEDIAWIKI_DB_NAME in .env}
+      MARIADB_USER: ${MEDIAWIKI_DB_USER:?set MEDIAWIKI_DB_USER in .env}
+      MARIADB_PASSWORD: ${MEDIAWIKI_DB_PASSWORD:?set MEDIAWIKI_DB_PASSWORD in .env}
+      MARIADB_ROOT_PASSWORD: ${MEDIAWIKI_DB_ROOT_PASSWORD:?set MEDIAWIKI_DB_ROOT_PASSWORD in .env}
+    command: ["mariadbd", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - mediawiki_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+
+  mediawiki:
+    build:
+      context: ./wiki
+    restart: unless-stopped
+    depends_on:
+      mediawiki-db:
+        condition: service_healthy
+    environment:
+      MEDIAWIKI_SERVER: ${MEDIAWIKI_SERVER:?set MEDIAWIKI_SERVER in .env}
+      MEDIAWIKI_SITE_NAME: ${MEDIAWIKI_SITE_NAME:-KorewaDiscord Underground Wiki}
+      MEDIAWIKI_SCRIPT_PATH: ${MEDIAWIKI_SCRIPT_PATH:-/wiki}
+      MEDIAWIKI_ALLOW_ANON_EDIT: ${MEDIAWIKI_ALLOW_ANON_EDIT:-false}
+      MEDIAWIKI_ADMIN_USER: ${MEDIAWIKI_ADMIN_USER:?set MEDIAWIKI_ADMIN_USER in .env}
+      MEDIAWIKI_ADMIN_PASSWORD: ${MEDIAWIKI_ADMIN_PASSWORD:?set MEDIAWIKI_ADMIN_PASSWORD in .env}
+      MEDIAWIKI_DB_HOST: mediawiki-db
+      MEDIAWIKI_DB_NAME: ${MEDIAWIKI_DB_NAME:?set MEDIAWIKI_DB_NAME in .env}
+      MEDIAWIKI_DB_USER: ${MEDIAWIKI_DB_USER:?set MEDIAWIKI_DB_USER in .env}
+      MEDIAWIKI_DB_PASSWORD: ${MEDIAWIKI_DB_PASSWORD:?set MEDIAWIKI_DB_PASSWORD in .env}
+    volumes:
+      - wiki_config:/data
+      - wiki_images:/var/www/html/images
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  exam_data:
+  mediawiki_db:
+  wiki_config:
+  wiki_images:

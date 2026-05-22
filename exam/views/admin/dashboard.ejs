@@ -1,0 +1,84 @@
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Dashboard</h1>
+  </div>
+  <form method="post" action="<%= url('/admin/logout') %>">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button class="button secondary" type="submit">Log out</button>
+  </form>
+</section>
+
+<section class="metrics">
+  <div class="metric">
+    <span>Total tests</span>
+    <strong><%= stats.totalTests %></strong>
+  </div>
+  <div class="metric">
+    <span>Opened</span>
+    <strong><%= stats.openedTests %></strong>
+  </div>
+  <div class="metric">
+    <span>Closed</span>
+    <strong><%= stats.closedTests %></strong>
+  </div>
+</section>
+
+<section class="quick-actions">
+  <form method="post" action="<%= url('/admin/tests') %>" class="inline-create">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="title" type="text" placeholder="New test title" required>
+    <button class="button" type="submit">Create new test</button>
+  </form>
+  <a class="button secondary" href="<%= url('/admin/tests') %>">Edit tests</a>
+  <a class="button secondary" href="<%= url('/admin/attempts') %>">Reset attempts</a>
+</section>
+
+<section class="grid-two">
+  <div class="table-panel">
+    <h2>Submissions per test</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Submissions</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% submissionsByTest.forEach((row) => { %>
+          <tr>
+            <td><%= row.title %></td>
+            <td><%= row.submission_count %></td>
+            <td class="actions"><a href="<%= url(`/admin/attempts?test_id=${row.id}`) %>">View</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-panel">
+    <h2>Recent submissions</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Discord ID</th>
+          <th>Test</th>
+          <th>Submitted</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% recentSubmissions.forEach((attempt) => { %>
+          <tr>
+            <td><a href="<%= url(`/admin/attempts/${attempt.id}`) %>"><%= attempt.discord_id %></a></td>
+            <td><%= attempt.test_title %></td>
+            <td><%= attempt.submitted_at %></td>
+          </tr>
+        <% }) %>
+        <% if (!recentSubmissions.length) { %>
+          <tr><td colspan="3" class="empty">No submissions yet.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>

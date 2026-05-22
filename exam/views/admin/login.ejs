@@ -1,0 +1,15 @@
+<section class="panel narrow">
+  <p class="eyebrow">Admin</p>
+  <h1>Dashboard login</h1>
+  <% if (error) { %>
+    <p class="notice danger"><%= error %></p>
+  <% } %>
+  <form method="post" action="<%= url('/admin/login') %>" class="stacked-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" required autocomplete="username">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" required autocomplete="current-password">
+    <button class="button" type="submit">Log in</button>
+  </form>
+</section>

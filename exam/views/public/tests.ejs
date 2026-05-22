@@ -1,0 +1,55 @@
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Signed in as <%= discordId %></p>
+    <h1>Available tests</h1>
+  </div>
+</section>
+
+<section class="table-panel">
+  <table>
+    <thead>
+      <tr>
+        <th>Test</th>
+        <th>Questions</th>
+        <th>Status</th>
+        <th>Attempt</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% tests.forEach((test) => { %>
+        <% const attempted = test.attempt_status === 'SUBMITTED'; %>
+        <% const inProgress = test.attempt_status === 'IN_PROGRESS'; %>
+        <tr>
+          <td>
+            <strong><%= test.title %></strong>
+            <span class="row-note"><%= test.description %></span>
+          </td>
+          <td><%= test.question_count %></td>
+          <td><span class="status <%= test.status.toLowerCase() %>"><%= test.status %></span></td>
+          <td>
+            <% if (attempted) { %>
+              Submitted
+            <% } else if (inProgress) { %>
+              In progress
+            <% } else { %>
+              Not started
+            <% } %>
+          </td>
+          <td class="actions">
+            <% if (test.status === 'OPENED' && !attempted) { %>
+              <a class="button small" href="<%= url(`/tests/${test.id}/intro`) %>"><%= inProgress ? 'Continue' : 'Start' %></a>
+            <% } else { %>
+              <button class="button small" type="button" disabled>Unavailable</button>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!tests.length) { %>
+        <tr>
+          <td colspan="5" class="empty">No tests are available yet.</td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+</section>

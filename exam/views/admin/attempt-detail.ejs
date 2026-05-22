@@ -1,0 +1,50 @@
+<section class="page-heading">
+  <div>
+    <p class="eyebrow"><%= attempt.status %></p>
+    <h1><%= attempt.discord_id %></h1>
+    <p class="muted"><%= attempt.test_title %></p>
+  </div>
+  <a class="button secondary" href="<%= url('/admin/attempts') %>">Back to attempts</a>
+</section>
+
+<section class="panel">
+  <dl class="summary-grid">
+    <div>
+      <dt>Started</dt>
+      <dd><%= attempt.started_at %></dd>
+    </div>
+    <div>
+      <dt>Submitted</dt>
+      <dd><%= attempt.submitted_at || 'Not submitted' %></dd>
+    </div>
+    <div>
+      <dt>Status</dt>
+      <dd><%= attempt.status %></dd>
+    </div>
+  </dl>
+  <% if (attempt.status !== 'RESET') { %>
+    <form method="post" action="<%= url(`/admin/attempts/${attempt.id}/reset`) %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="button danger" type="submit">Reset this attempt</button>
+    </form>
+  <% } %>
+</section>
+
+<section class="answer-list">
+  <% answers.forEach((answer) => { %>
+    <article class="panel">
+      <p class="eyebrow">Question <%= answer.position %> · <%= answer.question_type %></p>
+      <h2><%= answer.question_text %></h2>
+      <% if (answer.question_type === 'MULTIPLE_CHOICE') { %>
+        <p><strong>Selected:</strong> <%= answer.selected_option || 'No answer recorded' %></p>
+        <p><strong>Correct answer:</strong> <%= answer.correct_options || 'No correct option marked' %></p>
+        <% if (answer.selected_option) { %>
+          <p class="<%= answer.selected_is_correct ? 'correct' : 'incorrect' %>"><%= answer.selected_is_correct ? 'Correct' : 'Incorrect' %></p>
+        <% } %>
+      <% } else { %>
+        <p class="essay-answer"><%= answer.essay_answer || 'No essay answer recorded' %></p>
+      <% } %>
+      <p class="row-note">Answered at: <%= answer.answered_at || 'Not answered' %></p>
+    </article>
+  <% }) %>
+</section>

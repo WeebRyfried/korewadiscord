@@ -1,0 +1,12 @@
+<section class="panel narrow">
+  <p class="eyebrow">Exam access</p>
+  <h1>Enter your Discord ID or username</h1>
+  <p class="muted">This identifies your attempts and prevents duplicate submissions for the same test.</p>
+
+  <form method="post" action="<%= url('/identify') %>" class="stacked-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label for="discord_id">Discord ID or username</label>
+    <input id="discord_id" name="discord_id" type="text" required autocomplete="username" placeholder="example: ryfried">
+    <button class="button" type="submit">Continue</button>
+  </form>
+</section>

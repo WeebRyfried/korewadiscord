@@ -1,0 +1,61 @@
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Attempts</h1>
+  </div>
+  <a class="button secondary" href="<%= url('/admin') %>">Dashboard</a>
+</section>
+
+<section class="panel">
+  <form method="get" action="<%= url('/admin/attempts') %>" class="filter-form">
+    <label>Test
+      <select name="test_id">
+        <option value="">All tests</option>
+        <% tests.forEach((test) => { %>
+          <option value="<%= test.id %>" <%= selectedTestId === test.id ? 'selected' : '' %>><%= test.title %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>Discord ID
+      <input name="discord_id" type="text" value="<%= discord %>" placeholder="Search Discord ID">
+    </label>
+    <button class="button" type="submit">Filter</button>
+  </form>
+</section>
+
+<section class="table-panel">
+  <table>
+    <thead>
+      <tr>
+        <th>Discord ID</th>
+        <th>Test</th>
+        <th>Status</th>
+        <th>Started</th>
+        <th>Submitted</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% attempts.forEach((attempt) => { %>
+        <tr>
+          <td><a href="<%= url(`/admin/attempts/${attempt.id}`) %>"><%= attempt.discord_id %></a></td>
+          <td><%= attempt.test_title %></td>
+          <td><span class="status neutral"><%= attempt.status %></span></td>
+          <td><%= attempt.started_at %></td>
+          <td><%= attempt.submitted_at || 'Not submitted' %></td>
+          <td class="actions">
+            <% if (attempt.status !== 'RESET') { %>
+              <form method="post" action="<%= url(`/admin/attempts/${attempt.id}/reset`) %>">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="button small danger" type="submit">Reset</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!attempts.length) { %>
+        <tr><td colspan="6" class="empty">No attempts match this filter.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</section>

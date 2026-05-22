@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%= title %> | KorewaDiscord Exam</title>
+    <link rel="stylesheet" href="<%= url('/assets/css/styles.css') %>">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="<%= url('/') %>">KorewaDiscord Exam</a>
+      <nav class="topnav">
+        <a href="<%= url('/tests') %>">Tests</a>
+        <a href="<%= url('/admin') %>">Admin</a>
+        <% if (discordId) { %>
+          <form method="post" action="<%= url('/logout') %>" class="inline-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="link-button" type="submit">Switch user</button>
+          </form>
+        <% } %>
+      </nav>
+    </header>
+
+    <main class="page">
+      <%- body %>
+    </main>
+  </body>
+</html>

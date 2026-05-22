@@ -1,0 +1,35 @@
+<section class="exam-shell">
+  <div class="exam-header">
+    <div>
+      <p class="eyebrow">Attempt <%= attempt.id %></p>
+      <h1><%= test.title %></h1>
+    </div>
+    <div class="timer" aria-live="polite">
+      <span id="timerSeconds"><%= test.timer_seconds_per_question %></span>s
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div id="progressText" class="progress-text"></div>
+    <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+  </div>
+
+  <section id="questionPanel" class="question-panel"></section>
+
+  <div class="exam-actions">
+    <button id="nextButton" class="button" type="button">Save and next</button>
+    <button id="submitButton" class="button" type="button" hidden>Submit answers</button>
+  </div>
+</section>
+
+<script>
+  window.EXAM_BOOTSTRAP = <%- safeJson({
+    csrfToken,
+    saveUrl: url(`/attempts/${attempt.id}/answers`),
+    submitUrl: url(`/attempts/${attempt.id}/submit`),
+    timerSeconds: test.timer_seconds_per_question,
+    questions: test.questions,
+    answers
+  }) %>;
+</script>
+<script src="<%= url('/assets/js/exam.js') %>"></script>

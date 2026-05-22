@@ -1,0 +1,39 @@
+<section class="panel">
+  <p class="eyebrow"><%= test.status %></p>
+  <h1><%= test.title %></h1>
+  <p class="muted"><%= test.description %></p>
+
+  <dl class="summary-grid">
+    <div>
+      <dt>Questions</dt>
+      <dd><%= test.question_count %></dd>
+    </div>
+    <div>
+      <dt>Timer</dt>
+      <dd><%= test.timer_seconds_per_question %> seconds per question</dd>
+    </div>
+    <div>
+      <dt>Attempt rule</dt>
+      <dd>One submission per Discord ID</dd>
+    </div>
+  </dl>
+
+  <div class="instructions">
+    <h2>Instructions</h2>
+    <p><%= test.instructions || 'Answer every question before the timer moves you forward.' %></p>
+  </div>
+
+  <% if (current && current.attempt_status === 'SUBMITTED') { %>
+    <p class="notice">This Discord ID has already submitted this test. Ask an admin to reset the attempt if a retake is needed.</p>
+    <a class="button secondary" href="<%= url('/tests') %>">Back to tests</a>
+  <% } else if (test.status !== 'OPENED') { %>
+    <p class="notice">This test is currently closed.</p>
+    <a class="button secondary" href="<%= url('/tests') %>">Back to tests</a>
+  <% } else { %>
+    <form method="post" action="<%= url(`/tests/${test.id}/start`) %>" class="confirm-row">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <a class="button secondary" href="<%= url('/tests') %>">Cancel</a>
+      <button class="button" type="submit">I understand, begin</button>
+    </form>
+  <% } %>
+</section>
