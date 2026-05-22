@@ -36,7 +36,11 @@
   </form>
   <form method="post" action="<%= url(`/admin/tests/${test.id}/archive`) %>" class="danger-row">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <button class="button danger" type="submit">Archive test</button>
+    <button class="button secondary" type="submit">Archive test</button>
+  </form>
+  <form method="post" action="<%= url(`/admin/tests/${test.id}/delete`) %>" class="danger-row" onsubmit="return confirm('Delete this test and all attempts? This cannot be undone.');">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button class="button danger" type="submit">Delete test</button>
   </form>
 </section>
 

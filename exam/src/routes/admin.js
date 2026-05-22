@@ -63,11 +63,23 @@ function createAdminRouter(db, config) {
     };
 
     const submissionsByTest = db.prepare(`
-      SELECT tests.id, tests.title, COUNT(attempts.id) AS submission_count
+      SELECT
+        tests.id,
+        tests.title,
+        tests.status,
+        (
+          SELECT COUNT(*)
+          FROM questions
+          WHERE questions.test_id = tests.id
+        ) AS question_count,
+        (
+          SELECT COUNT(*)
+          FROM attempts
+          WHERE attempts.test_id = tests.id
+            AND attempts.status = 'SUBMITTED'
+        ) AS submission_count
       FROM tests
-      LEFT JOIN attempts ON attempts.test_id = tests.id AND attempts.status = 'SUBMITTED'
       WHERE tests.archived_at IS NULL
-      GROUP BY tests.id
       ORDER BY tests.created_at DESC
     `).all();
 
@@ -161,6 +173,11 @@ function createAdminRouter(db, config) {
       WHERE id = ?
     `).run(now(), now(), Number(req.params.testId));
 
+    return res.redirect(req.toUrl('/admin/tests'));
+  });
+
+  router.post('/tests/:testId/delete', requireAdmin, (req, res) => {
+    db.prepare('DELETE FROM tests WHERE id = ?').run(Number(req.params.testId));
     return res.redirect(req.toUrl('/admin/tests'));
   });
 

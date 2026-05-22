@@ -42,9 +42,22 @@
               <input type="hidden" name="status" value="<%= test.status === 'OPENED' ? 'CLOSED' : 'OPENED' %>">
               <button class="button small secondary" type="submit"><%= test.status === 'OPENED' ? 'Close' : 'Open' %></button>
             </form>
+            <form method="post" action="<%= url(`/admin/tests/${test.id}/archive`) %>">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="button small secondary" type="submit">Archive</button>
+            </form>
+            <form method="post" action="<%= url(`/admin/tests/${test.id}/delete`) %>" onsubmit="return confirm('Delete this test and all attempts? This cannot be undone.');">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="button small danger" type="submit">Delete</button>
+            </form>
           </td>
         </tr>
       <% }) %>
+      <% if (!tests.length) { %>
+        <tr>
+          <td colspan="5" class="empty">No tests yet.</td>
+        </tr>
+      <% } %>
     </tbody>
   </table>
 </section>

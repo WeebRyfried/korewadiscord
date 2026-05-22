@@ -36,11 +36,12 @@
 
 <section class="grid-two">
   <div class="table-panel">
-    <h2>Submissions per test</h2>
+    <h2>Test controls</h2>
     <table>
       <thead>
         <tr>
           <th>Test</th>
+          <th>Status</th>
           <th>Submissions</th>
           <th></th>
         </tr>
@@ -48,11 +49,30 @@
       <tbody>
         <% submissionsByTest.forEach((row) => { %>
           <tr>
-            <td><%= row.title %></td>
+            <td>
+              <strong><%= row.title %></strong>
+              <span class="row-note"><%= row.question_count %> questions</span>
+            </td>
+            <td><span class="status <%= row.status.toLowerCase() %>"><%= row.status %></span></td>
             <td><%= row.submission_count %></td>
-            <td class="actions"><a href="<%= url(`/admin/attempts?test_id=${row.id}`) %>">View</a></td>
+            <td class="actions action-stack">
+              <a class="button small" href="<%= url(`/admin/tests/${row.id}/edit`) %>">Edit</a>
+              <form method="post" action="<%= url(`/admin/tests/${row.id}/status`) %>">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="status" value="<%= row.status === 'OPENED' ? 'CLOSED' : 'OPENED' %>">
+                <button class="button small secondary" type="submit"><%= row.status === 'OPENED' ? 'Close' : 'Open' %></button>
+              </form>
+              <a class="button small secondary" href="<%= url(`/admin/attempts?test_id=${row.id}`) %>">Attempts</a>
+              <form method="post" action="<%= url(`/admin/tests/${row.id}/delete`) %>" onsubmit="return confirm('Delete this test and all attempts? This cannot be undone.');">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="button small danger" type="submit">Delete</button>
+              </form>
+            </td>
           </tr>
         <% }) %>
+        <% if (!submissionsByTest.length) { %>
+          <tr><td colspan="4" class="empty">No tests yet.</td></tr>
+        <% } %>
       </tbody>
     </table>
   </div>

@@ -312,6 +312,7 @@ tr:last-child td {
 .action-stack {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
   justify-content: flex-end;
 }
 

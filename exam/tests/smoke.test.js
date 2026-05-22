@@ -31,6 +31,7 @@ test('public flow identifies a user and lists the seeded test', async () => {
   const agent = request.agent(app);
 
   const home = await agent.get('/').expect(200);
+  assert.match(home.text, /KorewaDiscord Underground/);
   const csrf = home.text.match(/name="_csrf" value="([^"]+)"/)[1];
 
   await agent
@@ -62,6 +63,35 @@ test('admin can log in and see dashboard stats', async () => {
   const dashboard = await agent.get('/admin').expect(200);
   assert.match(dashboard.text, /Total tests/);
   assert.match(dashboard.text, /Recent submissions/);
+});
+
+test('admin can delete a test from the dashboard', async () => {
+  const { app, db } = createTestApp();
+  const agent = request.agent(app);
+
+  const login = await agent.get('/admin/login').expect(200);
+  const loginCsrf = login.text.match(/name="_csrf" value="([^"]+)"/)[1];
+
+  await agent
+    .post('/admin/login')
+    .type('form')
+    .send({ _csrf: loginCsrf, username: 'admin', password: 'password' })
+    .expect(302)
+    .expect('Location', '/admin');
+
+  const dashboard = await agent.get('/admin').expect(200);
+  assert.match(dashboard.text, /Delete/);
+
+  const dashboardCsrf = dashboard.text.match(/name="_csrf" value="([^"]+)"/)[1];
+  await agent
+    .post('/admin/tests/1/delete')
+    .type('form')
+    .send({ _csrf: dashboardCsrf })
+    .expect(302)
+    .expect('Location', '/admin/tests');
+
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM tests').get().count, 0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM questions').get().count, 0);
 });
 
 test('duplicate submitted attempts are blocked until reset', async () => {
