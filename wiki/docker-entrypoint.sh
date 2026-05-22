@@ -63,7 +63,10 @@ if ! grep -Fq "$OVERRIDE_LINE" "$LOCAL_SETTINGS"; then
   } >> "$LOCAL_SETTINGS"
 fi
 
-ln -sf "$LOCAL_SETTINGS" "$HTML_SETTINGS"
+rm -f "$HTML_SETTINGS"
+cp "$LOCAL_SETTINGS" "$HTML_SETTINGS"
+chown www-data:www-data "$HTML_SETTINGS"
+chmod 640 "$HTML_SETTINGS"
 
 php maintenance/update.php --quick --skip-external-dependencies
 
