@@ -1,0 +1,12 @@
+{
+	"@metadata": {
+		"authors": [
+			"KorewaDiscord"
+		]
+	},
+	"korewaadmindashboard-desc": "Adds a compact wiki administrator dashboard for KorewaDiscord.",
+	"wikiadmindashboard": "Wiki admin dashboard",
+	"korewaadmindashboard-title": "Wiki admin dashboard",
+	"action-korewa-admin-dashboard": "view the wiki admin dashboard",
+	"right-korewa-admin-dashboard": "View the wiki admin dashboard"
+}

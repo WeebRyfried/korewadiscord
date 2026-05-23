@@ -1,0 +1,37 @@
+{
+	"manifest_version": 2,
+	"name": "KorewaAdminDashboard",
+	"version": "1.0.0",
+	"author": [
+		"KorewaDiscord"
+	],
+	"url": "https://underground.korewadiscord.com/wiki",
+	"descriptionmsg": "korewaadmindashboard-desc",
+	"license-name": "MIT",
+	"type": "specialpage",
+	"AutoloadClasses": {
+		"SpecialWikiAdminDashboard": "src/SpecialWikiAdminDashboard.php"
+	},
+	"SpecialPages": {
+		"WikiAdminDashboard": "SpecialWikiAdminDashboard"
+	},
+	"ExtensionMessagesFiles": {
+		"KorewaAdminDashboardAlias": "KorewaAdminDashboard.alias.php"
+	},
+	"MessagesDirs": {
+		"KorewaAdminDashboard": [
+			"i18n"
+		]
+	},
+	"AvailableRights": [
+		"korewa-admin-dashboard"
+	],
+	"GroupPermissions": {
+		"sysop": {
+			"korewa-admin-dashboard": true
+		},
+		"bureaucrat": {
+			"korewa-admin-dashboard": true
+		}
+	}
+}
