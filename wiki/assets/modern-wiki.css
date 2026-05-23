@@ -217,7 +217,7 @@ body.skin-vector-2022 .vector-appearance-landmark {
 
 body.skin-vector-2022 .mw-body h1,
 body.skin-vector-2022 .mw-first-heading {
-	border-bottom: 1px solid #a2a9b1;
+	border-bottom: 2px solid #72777d;
 	font-family: Linux Libertine, Georgia, Times, serif;
 	font-size: 2rem;
 	font-weight: 400;
@@ -226,7 +226,7 @@ body.skin-vector-2022 .mw-first-heading {
 }
 
 body.skin-vector-2022 .mw-body h2 {
-	border-bottom: 1px solid #eaecf0;
+	border-bottom: 1px solid #a2a9b1;
 	font-family: Linux Libertine, Georgia, Times, serif;
 	font-size: 1.55rem;
 	font-weight: 400;

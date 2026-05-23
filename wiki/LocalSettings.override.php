@@ -103,7 +103,7 @@ $wgGroupPermissions['bureaucrat']['korewa-admin-dashboard'] = true;
 
 $wgHooks['BeforePageDisplay'][] = static function ( $out, $skin ) use ( $korewaAssetPath ) {
 	$out->addMeta( 'viewport', 'width=device-width, initial-scale=1' );
-	$out->addStyle( "$korewaAssetPath/modern-wiki.css" );
+	$out->addStyle( "$korewaAssetPath/modern-wiki.css?v=20260523-heading-lines" );
 
 	return true;
 };
