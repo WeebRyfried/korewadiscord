@@ -21,7 +21,10 @@ function loadConfig() {
     adminUser: requireInProduction('EXAM_ADMIN_USER', 'ryfried'),
     adminPassword: requireInProduction('EXAM_ADMIN_PASSWORD', 'development-password'),
     sessionSecret: requireInProduction('EXAM_SESSION_SECRET', 'development-session-secret-change-me'),
-    cookieSecure
+    cookieSecure,
+    deepseekApiKey: process.env.DEEPSEEK_API_KEY || '',
+    deepseekBaseUrl: (process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').replace(/\/$/, ''),
+    deepseekModel: process.env.DEEPSEEK_MODEL || 'deepseek-chat'
   };
 }
 

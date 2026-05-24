@@ -51,7 +51,11 @@
           <tr>
             <td>
               <strong><%= row.title %></strong>
-              <span class="row-note"><%= row.question_count %> questions</span>
+              <% if (row.randomize_questions) { %>
+                <span class="row-note"><%= row.question_limit && row.question_limit < row.question_count ? row.question_limit : row.question_count %> of <%= row.question_count %> randomized</span>
+              <% } else { %>
+                <span class="row-note"><%= row.question_count %> questions</span>
+              <% } %>
             </td>
             <td><span class="status <%= row.status.toLowerCase() %>"><%= row.status %></span></td>
             <td><%= row.submission_count %></td>
@@ -84,6 +88,7 @@
         <tr>
           <th>Discord ID</th>
           <th>Test</th>
+          <th>Score</th>
           <th>Submitted</th>
         </tr>
       </thead>
@@ -92,11 +97,19 @@
           <tr>
             <td><a href="<%= url(`/admin/attempts/${attempt.id}`) %>"><%= attempt.discord_id %></a></td>
             <td><%= attempt.test_title %></td>
+            <td>
+              <% if (attempt.score_percent === null) { %>
+                <span class="row-note">N/A</span>
+              <% } else { %>
+                <strong><%= attempt.score_percent %>%</strong>
+                <span class="row-note"><%= attempt.score_earned %>/<%= attempt.score_total %><% if (attempt.score_pending_count) { %> · <%= attempt.score_pending_count %> pending<% } %></span>
+              <% } %>
+            </td>
             <td><%= attempt.submitted_at %></td>
           </tr>
         <% }) %>
         <% if (!recentSubmissions.length) { %>
-          <tr><td colspan="3" class="empty">No submissions yet.</td></tr>
+          <tr><td colspan="4" class="empty">No submissions yet.</td></tr>
         <% } %>
       </tbody>
     </table>

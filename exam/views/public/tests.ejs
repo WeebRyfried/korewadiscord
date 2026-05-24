@@ -25,7 +25,13 @@
             <strong><%= test.title %></strong>
             <span class="row-note"><%= test.description %></span>
           </td>
-          <td><%= test.question_count %></td>
+          <td>
+            <% if (test.randomize_questions) { %>
+              <%= test.effective_question_count %><span class="row-note"> of <%= test.question_count %> randomized</span>
+            <% } else { %>
+              <%= test.question_count %>
+            <% } %>
+          </td>
           <td><span class="status <%= test.status.toLowerCase() %>"><%= test.status %></span></td>
           <td>
             <% if (attempted) { %>

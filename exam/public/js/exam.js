@@ -29,6 +29,25 @@
     return boot.questions[index];
   }
 
+  function allQuestionsComplete() {
+    return boot.questions.every((question) => answersByQuestion.has(question.id));
+  }
+
+  function updateActionButtons() {
+    const complete = allQuestionsComplete();
+    const isLastQuestion = index === boot.questions.length - 1;
+
+    nextButton.hidden = complete;
+    nextButton.textContent = isLastQuestion ? 'Save final answer' : 'Save and next';
+    submitButton.hidden = !complete;
+    submitButton.disabled = !complete;
+  }
+
+  function showDangerNotice(message) {
+    panel.querySelectorAll('.notice.danger').forEach((notice) => notice.remove());
+    panel.insertAdjacentHTML('beforeend', `<p class="notice danger">${escapeHtml(message)}</p>`);
+  }
+
   function renderQuestion() {
     const question = currentQuestion();
     const answer = answersByQuestion.get(question.id) || {};
@@ -37,8 +56,7 @@
 
     progressText.textContent = `Question ${questionNumber} of ${boot.questions.length}`;
     progressBar.style.width = `${progress}%`;
-    nextButton.hidden = index === boot.questions.length - 1;
-    submitButton.hidden = index !== boot.questions.length - 1;
+    updateActionButtons();
 
     if (question.question_type === 'MULTIPLE_CHOICE') {
       const options = question.options.map((option) => {
@@ -135,13 +153,16 @@
       if (index < boot.questions.length - 1) {
         index += 1;
         renderQuestion();
+      } else {
+        clearInterval(timerId);
+        updateActionButtons();
       }
     } catch (error) {
-      panel.insertAdjacentHTML('beforeend', '<p class="notice danger">Your answer could not be saved. Check the connection and try again.</p>');
+      showDangerNotice('Your answer could not be saved. Check the connection and try again.');
     } finally {
       saving = false;
       nextButton.disabled = false;
-      submitButton.disabled = false;
+      updateActionButtons();
     }
   }
 
@@ -150,7 +171,14 @@
       return;
     }
 
+    if (!allQuestionsComplete()) {
+      showDangerNotice('Answer or wait out every question before submitting.');
+      updateActionButtons();
+      return;
+    }
+
     saving = true;
+    nextButton.disabled = true;
     submitButton.disabled = true;
     clearInterval(timerId);
 
@@ -171,10 +199,11 @@
       }
       window.location.assign(body.redirect);
     } catch (error) {
-      submitButton.disabled = false;
-      panel.insertAdjacentHTML('beforeend', '<p class="notice danger">Your attempt could not be submitted. Please try again.</p>');
+      showDangerNotice('Your attempt could not be submitted. Please try again.');
     } finally {
       saving = false;
+      nextButton.disabled = false;
+      updateActionButtons();
     }
   }
 

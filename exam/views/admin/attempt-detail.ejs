@@ -21,7 +21,28 @@
       <dt>Status</dt>
       <dd><%= attempt.status %></dd>
     </div>
+    <div>
+      <dt>Questions</dt>
+      <dd><%= attempt.assigned_question_count || answers.length %></dd>
+    </div>
+    <div>
+      <dt>Score</dt>
+      <dd>
+        <% if (attempt.score_percent === null) { %>
+          N/A
+        <% } else { %>
+          <%= attempt.score_percent %>%
+          <span class="row-note"><%= attempt.score_earned %>/<%= attempt.score_total %><% if (attempt.score_pending_count) { %> · <%= attempt.score_pending_count %> pending<% } %><% if (attempt.score_error_count) { %> · <%= attempt.score_error_count %> error<% } %></span>
+        <% } %>
+      </dd>
+    </div>
   </dl>
+  <% if (attempt.status === 'SUBMITTED') { %>
+    <form method="post" action="<%= url(`/admin/attempts/${attempt.id}/regrade`) %>" class="danger-row">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="button secondary" type="submit">Regrade essays</button>
+    </form>
+  <% } %>
   <% if (attempt.status !== 'RESET') { %>
     <form method="post" action="<%= url(`/admin/attempts/${attempt.id}/reset`) %>">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -33,7 +54,7 @@
 <section class="answer-list">
   <% answers.forEach((answer) => { %>
     <article class="panel">
-      <p class="eyebrow">Question <%= answer.position %> · <%= answer.question_type %></p>
+      <p class="eyebrow">Question <%= answer.position %> · <%= answer.question_type %><% if (answer.original_position && answer.original_position !== answer.position) { %> · Original #<%= answer.original_position %><% } %></p>
       <h2><%= answer.question_text %></h2>
       <% if (answer.question_type === 'MULTIPLE_CHOICE') { %>
         <p><strong>Selected:</strong> <%= answer.selected_option || 'No answer recorded' %></p>
@@ -41,10 +62,51 @@
         <% if (answer.selected_option) { %>
           <p class="<%= answer.selected_is_correct ? 'correct' : 'incorrect' %>"><%= answer.selected_is_correct ? 'Correct' : 'Incorrect' %></p>
         <% } %>
+        <p><strong>Score:</strong> <%= answer.score_status === 'SCORED' ? `${answer.score}/1` : (answer.score_status || 'PENDING') %></p>
       <% } else { %>
+        <p><strong>Sample answer:</strong> <%= answer.sample_answer || 'No sample answer configured' %></p>
         <p class="essay-answer"><%= answer.essay_answer || 'No essay answer recorded' %></p>
+        <p><strong>Score:</strong> <%= answer.score_status === 'SCORED' ? `${answer.score}/1` : (answer.score_status || 'PENDING') %></p>
+      <% } %>
+      <% if (answer.score_feedback) { %>
+        <p class="row-note"><strong>Feedback:</strong> <%= answer.score_feedback %></p>
+      <% } %>
+      <% if (answer.scored_by) { %>
+        <p class="row-note"><strong>Scored by:</strong> <%= answer.scored_by %><% if (answer.scored_at) { %> at <%= answer.scored_at %><% } %></p>
+      <% } %>
+      <% if (answer.score_dispute_message) { %>
+        <p class="row-note"><strong>Latest dispute:</strong> <%= answer.score_dispute_message %><% if (answer.score_disputed_at) { %> at <%= answer.score_disputed_at %><% } %></p>
       <% } %>
       <p class="row-note">Answered at: <%= answer.answered_at || 'Not answered' %></p>
+      <% if (attempt.status === 'SUBMITTED') { %>
+        <div class="grade-actions">
+          <form method="post" action="<%= url(`/admin/attempts/${attempt.id}/questions/${answer.question_id}/manual-score`) %>" class="grade-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label>Manual grade override
+              <select name="score" required>
+                <option value="" disabled <%= answer.score_status === 'SCORED' ? '' : 'selected' %>>Choose score</option>
+                <option value="1" <%= answer.score_status === 'SCORED' && Number(answer.score) === 1 ? 'selected' : '' %>>1 / 1</option>
+                <option value="0.5" <%= answer.score_status === 'SCORED' && Number(answer.score) === 0.5 ? 'selected' : '' %>>0.5 / 1</option>
+                <option value="0" <%= answer.score_status === 'SCORED' && Number(answer.score) === 0 ? 'selected' : '' %>>0 / 1</option>
+              </select>
+            </label>
+            <label>Feedback or note
+              <textarea name="feedback" rows="2"><%= answer.score_feedback || '' %></textarea>
+            </label>
+            <button class="button small" type="submit">Save manual grade</button>
+          </form>
+
+          <% if (answer.question_type === 'SHORT_ESSAY' && answer.answer_id) { %>
+            <form method="post" action="<%= url(`/admin/answers/${answer.answer_id}/dispute`) %>" class="grade-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <label>AI grading dispute
+                <textarea name="dispute_message" rows="3" required><%= answer.score_dispute_message || '' %></textarea>
+              </label>
+              <button class="button small secondary" type="submit">Dispute and regrade</button>
+            </form>
+          <% } %>
+        </div>
+      <% } %>
     </article>
   <% }) %>
 </section>

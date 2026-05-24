@@ -84,7 +84,7 @@ function createApp({ db, config }) {
     res.json({ ok: true });
   });
 
-  app.use('/', createPublicRouter(db));
+  app.use('/', createPublicRouter(db, config));
   app.use('/admin', createAdminRouter(db, config));
 
   app.use((req, res) => {

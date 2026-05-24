@@ -6,7 +6,13 @@
   <dl class="summary-grid">
     <div>
       <dt>Questions</dt>
-      <dd><%= test.question_count %></dd>
+      <dd>
+        <% if (test.randomize_questions) { %>
+          <%= test.effective_question_count %><span class="row-note"> randomized from <%= test.question_count %></span>
+        <% } else { %>
+          <%= test.question_count %>
+        <% } %>
+      </dd>
     </div>
     <div>
       <dt>Timer</dt>

@@ -2,8 +2,14 @@ const express = require('express');
 const {
   now,
   getTestWithQuestions,
+  updateQuestionOptions,
+  getAttemptAnswerReview,
+  getAttemptScoreSummary,
+  decorateAttemptsWithScores,
+  setManualAnswerScore,
   resetAttempt
 } = require('../database');
+const { gradeSubmittedAttempt, regradeEssayAnswerWithDispute } = require('../scoring');
 
 function requireAdmin(req, res, next) {
   if (!req.session.isAdmin) {
@@ -19,6 +25,28 @@ function asStatus(value) {
 
 function asQuestionType(value) {
   return value === 'SHORT_ESSAY' ? 'SHORT_ESSAY' : 'MULTIPLE_CHOICE';
+}
+
+function asBoolean(value) {
+  return value === true || value === '1' || value === 'on' || value === 'true';
+}
+
+function asPositiveIntegerOrNull(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return null;
+  }
+
+  return Math.floor(parsed);
+}
+
+function asTimerSeconds(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 60;
+  }
+
+  return Math.max(10, Math.min(3600, Math.floor(parsed)));
 }
 
 function createAdminRouter(db, config) {
@@ -67,6 +95,8 @@ function createAdminRouter(db, config) {
         tests.id,
         tests.title,
         tests.status,
+        tests.randomize_questions,
+        tests.question_limit,
         (
           SELECT COUNT(*)
           FROM questions
@@ -83,14 +113,14 @@ function createAdminRouter(db, config) {
       ORDER BY tests.created_at DESC
     `).all();
 
-    const recentSubmissions = db.prepare(`
+    const recentSubmissions = decorateAttemptsWithScores(db, db.prepare(`
       SELECT attempts.*, tests.title AS test_title
       FROM attempts
       INNER JOIN tests ON tests.id = attempts.test_id
       WHERE attempts.status = 'SUBMITTED'
       ORDER BY attempts.submitted_at DESC
       LIMIT 8
-    `).all();
+    `).all());
 
     return res.render('admin/dashboard', {
       title: 'Admin dashboard',
@@ -139,16 +169,21 @@ function createAdminRouter(db, config) {
   });
 
   router.post('/tests/:testId', requireAdmin, (req, res) => {
+    const randomizeQuestions = asBoolean(req.body.randomize_questions) ? 1 : 0;
+    const questionLimit = randomizeQuestions ? asPositiveIntegerOrNull(req.body.question_limit) : null;
+
     db.prepare(`
       UPDATE tests
-      SET title = ?, description = ?, instructions = ?, status = ?, timer_seconds_per_question = ?, updated_at = ?
+      SET title = ?, description = ?, instructions = ?, status = ?, timer_seconds_per_question = ?, randomize_questions = ?, question_limit = ?, updated_at = ?
       WHERE id = ? AND archived_at IS NULL
     `).run(
       String(req.body.title || '').trim() || 'Untitled test',
       String(req.body.description || '').trim(),
       String(req.body.instructions || '').trim(),
       asStatus(req.body.status),
-      Math.max(10, Number(req.body.timer_seconds_per_question || 60)),
+      asTimerSeconds(req.body.timer_seconds_per_question || 60),
+      randomizeQuestions,
+      questionLimit,
       now(),
       Number(req.params.testId)
     );
@@ -216,16 +251,31 @@ function createAdminRouter(db, config) {
       return res.redirect(req.toUrl('/admin/tests'));
     }
 
+    const questionText = String(req.body.question_text || '').trim() || 'Untitled question';
+    const sampleAnswer = question.question_type === 'SHORT_ESSAY'
+      ? String(req.body.sample_answer || '').trim()
+      : '';
+    const previousSampleAnswer = String(question.sample_answer || '');
+
     db.prepare(`
       UPDATE questions
-      SET question_text = ?, position = ?, updated_at = ?
+      SET question_text = ?, sample_answer = ?, position = ?, updated_at = ?
       WHERE id = ?
     `).run(
-      String(req.body.question_text || '').trim() || 'Untitled question',
+      questionText,
+      sampleAnswer,
       Math.max(1, Number(req.body.position || question.position)),
       now(),
       question.id
     );
+
+    if (question.question_type === 'SHORT_ESSAY' && sampleAnswer !== previousSampleAnswer) {
+      db.prepare(`
+        UPDATE answers
+        SET score = NULL, score_status = 'PENDING', score_feedback = NULL, scored_at = NULL, scored_by = NULL
+        WHERE question_id = ?
+      `).run(question.id);
+    }
 
     return res.redirect(req.toUrl(`/admin/tests/${question.test_id}/edit`));
   });
@@ -253,6 +303,16 @@ function createAdminRouter(db, config) {
     `).run(question.id, String(req.body.option_text || '').trim() || 'New option', nextPosition);
 
     return res.redirect(req.toUrl(`/admin/tests/${question.test_id}/edit`));
+  });
+
+  router.post('/questions/:questionId/options/bulk', requireAdmin, (req, res, next) => {
+    try {
+      const question = updateQuestionOptions(db, Number(req.params.questionId), req.body);
+      return res.redirect(req.toUrl(`/admin/tests/${question.test_id}/edit`));
+    } catch (err) {
+      err.status = 400;
+      return next(err);
+    }
   });
 
   router.post('/options/:optionId', requireAdmin, (req, res) => {
@@ -311,14 +371,14 @@ function createAdminRouter(db, config) {
     }
 
     const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
-    const attempts = db.prepare(`
+    const attempts = decorateAttemptsWithScores(db, db.prepare(`
       SELECT attempts.*, tests.title AS test_title
       FROM attempts
       INNER JOIN tests ON tests.id = attempts.test_id
       ${where}
       ORDER BY attempts.started_at DESC
       LIMIT 200
-    `).all(...params);
+    `).all(...params));
 
     const tests = db.prepare(`
       SELECT id, title
@@ -338,7 +398,16 @@ function createAdminRouter(db, config) {
 
   router.get('/attempts/:attemptId', requireAdmin, (req, res, next) => {
     const attempt = db.prepare(`
-      SELECT attempts.*, tests.title AS test_title
+      SELECT
+        attempts.*,
+        tests.title AS test_title,
+        tests.randomize_questions,
+        tests.question_limit,
+        (
+          SELECT COUNT(*)
+          FROM attempt_questions
+          WHERE attempt_questions.attempt_id = attempts.id
+        ) AS assigned_question_count
       FROM attempts
       INNER JOIN tests ON tests.id = attempts.test_id
       WHERE attempts.id = ?
@@ -347,32 +416,64 @@ function createAdminRouter(db, config) {
       return next();
     }
 
-    const answers = db.prepare(`
-      SELECT
-        questions.position,
-        questions.question_text,
-        questions.question_type,
-        selected.option_text AS selected_option,
-        selected.is_correct AS selected_is_correct,
-        answers.essay_answer,
-        answers.answered_at,
-        (
-          SELECT GROUP_CONCAT(option_text, ', ')
-          FROM question_options
-          WHERE question_options.question_id = questions.id AND is_correct = 1
-        ) AS correct_options
-      FROM questions
-      LEFT JOIN answers ON answers.question_id = questions.id AND answers.attempt_id = ?
-      LEFT JOIN question_options selected ON selected.id = answers.selected_option_id
-      WHERE questions.test_id = ?
-      ORDER BY questions.position ASC, questions.id ASC
-    `).all(attempt.id, attempt.test_id);
+    const answers = getAttemptAnswerReview(db, attempt.id);
+    attempt.assigned_question_count = answers.length;
+    Object.assign(attempt, getAttemptScoreSummary(db, attempt.id));
 
     return res.render('admin/attempt-detail', {
       title: `Attempt ${attempt.id}`,
       attempt,
       answers
     });
+  });
+
+  router.post('/attempts/:attemptId/regrade', requireAdmin, async (req, res, next) => {
+    try {
+      const attempt = db.prepare('SELECT * FROM attempts WHERE id = ?').get(Number(req.params.attemptId));
+      if (!attempt) {
+        return next();
+      }
+
+      await gradeSubmittedAttempt(db, config, attempt.id, { force: true });
+      return res.redirect(req.get('referer') || req.toUrl(`/admin/attempts/${attempt.id}`));
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  router.post('/answers/:answerId/dispute', requireAdmin, async (req, res, next) => {
+    try {
+      const disputeMessage = String(req.body.dispute_message || '').trim();
+      if (!disputeMessage) {
+        const err = new Error('Add a dispute message before requesting an AI regrade.');
+        err.status = 400;
+        throw err;
+      }
+
+      const answerId = Number(req.params.answerId);
+      await regradeEssayAnswerWithDispute(db, config, answerId, disputeMessage);
+      const answer = db.prepare('SELECT attempt_id FROM answers WHERE id = ?').get(answerId);
+      return res.redirect(req.get('referer') || req.toUrl(answer ? `/admin/attempts/${answer.attempt_id}` : '/admin/attempts'));
+    } catch (err) {
+      err.status = err.status || 400;
+      return next(err);
+    }
+  });
+
+  router.post('/attempts/:attemptId/questions/:questionId/manual-score', requireAdmin, (req, res, next) => {
+    try {
+      setManualAnswerScore(
+        db,
+        Number(req.params.attemptId),
+        Number(req.params.questionId),
+        req.body.score,
+        req.body.feedback
+      );
+      return res.redirect(req.get('referer') || req.toUrl(`/admin/attempts/${req.params.attemptId}`));
+    } catch (err) {
+      err.status = 400;
+      return next(err);
+    }
   });
 
   router.post('/attempts/:attemptId/reset', requireAdmin, (req, res) => {

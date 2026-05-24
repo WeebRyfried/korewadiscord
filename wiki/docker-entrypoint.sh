@@ -67,6 +67,7 @@ rm -f "$HTML_SETTINGS"
 cp "$LOCAL_SETTINGS" "$HTML_SETTINGS"
 chown www-data:www-data "$HTML_SETTINGS"
 chmod 640 "$HTML_SETTINGS"
+chown -R www-data:www-data /var/www/html/images
 
 php maintenance/update.php --quick --skip-external-dependencies
 

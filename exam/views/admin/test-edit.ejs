@@ -29,6 +29,14 @@
       <label>Timer seconds per question
         <input name="timer_seconds_per_question" type="number" min="10" max="3600" value="<%= test.timer_seconds_per_question %>">
       </label>
+      <label class="checkbox-label">
+        <input name="randomize_questions" type="checkbox" value="1" <%= test.randomize_questions ? 'checked' : '' %>>
+        Randomized question set per attempt
+      </label>
+      <label>Questions shown per attempt
+        <input name="question_limit" type="number" min="1" max="<%= Math.max(test.question_count, 1) %>" value="<%= test.question_limit || '' %>" placeholder="All">
+        <span class="row-note">Use 10 to show a random 10 from the question bank. Leave blank to use all <%= test.question_count %> questions.</span>
+      </label>
     </div>
     <div class="action-row">
       <button class="button" type="submit">Save settings</button>
@@ -81,6 +89,12 @@
             <textarea name="question_text" rows="3"><%= question.question_text %></textarea>
           </label>
         </div>
+        <% if (question.question_type === 'SHORT_ESSAY') { %>
+          <label>Sample answer for AI grading
+            <textarea name="sample_answer" rows="3" placeholder="Reference answer used by DeepSeek to grade this essay"><%= question.sample_answer || '' %></textarea>
+            <span class="row-note">DeepSeek grades submitted answers as 0, 0.5, or 1 against this sample answer.</span>
+          </label>
+        <% } %>
         <div class="action-row">
           <button class="button small" type="submit">Save question</button>
         </div>
@@ -89,26 +103,38 @@
       <% if (question.question_type === 'MULTIPLE_CHOICE') { %>
         <div class="options-editor">
           <h3>Options</h3>
-          <% question.options.forEach((option) => { %>
-            <form method="post" action="<%= url(`/admin/options/${option.id}`) %>" class="option-row">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <input name="position" type="number" min="1" value="<%= option.position %>" aria-label="Option position">
-              <input name="option_text" type="text" value="<%= option.option_text %>" aria-label="Option text">
-              <label class="checkbox-label">
-                <input name="is_correct" type="checkbox" value="1" <%= option.is_correct ? 'checked' : '' %>>
-                Correct
-              </label>
-              <button class="button small secondary" type="submit">Save</button>
-            </form>
-            <form method="post" action="<%= url(`/admin/options/${option.id}/delete`) %>" class="delete-form">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <button class="link-danger" type="submit">Delete option</button>
-            </form>
-          <% }) %>
-          <form method="post" action="<%= url(`/admin/questions/${question.id}/options`) %>" class="inline-create">
+          <form method="post" action="<%= url(`/admin/questions/${question.id}/options/bulk`) %>" class="options-bulk-form" data-options-form>
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <input name="option_text" type="text" placeholder="New option text" required>
-            <button class="button small" type="submit">Add option</button>
+            <% question.options.forEach((option) => { %>
+              <div class="option-row">
+                <input name="options[option_<%= option.id %>][position]" type="number" min="1" value="<%= option.position %>" aria-label="Option position">
+                <input name="options[option_<%= option.id %>][option_text]" type="text" value="<%= option.option_text %>" aria-label="Option text">
+                <label class="checkbox-label">
+                  <input name="options[option_<%= option.id %>][is_correct]" type="checkbox" value="1" <%= option.is_correct ? 'checked' : '' %>>
+                  Correct
+                </label>
+                <label class="checkbox-label option-delete">
+                  <input name="options[option_<%= option.id %>][delete]" type="checkbox" value="1">
+                  Delete
+                </label>
+              </div>
+            <% }) %>
+            <div class="new-options" data-new-options></div>
+            <template data-option-template>
+              <div class="option-row">
+                <input name="new_options[__INDEX__][position]" type="number" min="1" aria-label="New option position">
+                <input name="new_options[__INDEX__][option_text]" type="text" placeholder="New option text" aria-label="New option text">
+                <label class="checkbox-label">
+                  <input name="new_options[__INDEX__][is_correct]" type="checkbox" value="1">
+                  Correct
+                </label>
+                <span></span>
+              </div>
+            </template>
+            <div class="action-row">
+              <button class="button small secondary" type="button" data-add-option>Add option row</button>
+              <button class="button small" type="submit">Save options</button>
+            </div>
           </form>
         </div>
       <% } %>
@@ -120,3 +146,5 @@
     </article>
   <% }) %>
 </section>
+
+<script src="<%= url('/assets/js/admin-test-edit.js') %>?v=20260524-options"></script>

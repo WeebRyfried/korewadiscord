@@ -30,6 +30,7 @@
         <th>Discord ID</th>
         <th>Test</th>
         <th>Status</th>
+        <th>Score</th>
         <th>Started</th>
         <th>Submitted</th>
         <th></th>
@@ -41,6 +42,14 @@
           <td><a href="<%= url(`/admin/attempts/${attempt.id}`) %>"><%= attempt.discord_id %></a></td>
           <td><%= attempt.test_title %></td>
           <td><span class="status neutral"><%= attempt.status %></span></td>
+          <td>
+            <% if (attempt.score_percent === null) { %>
+              <span class="row-note">N/A</span>
+            <% } else { %>
+              <strong><%= attempt.score_percent %>%</strong>
+              <span class="row-note"><%= attempt.score_earned %>/<%= attempt.score_total %><% if (attempt.score_pending_count) { %> · <%= attempt.score_pending_count %> pending<% } %></span>
+            <% } %>
+          </td>
           <td><%= attempt.started_at %></td>
           <td><%= attempt.submitted_at || 'Not submitted' %></td>
           <td class="actions">
@@ -54,7 +63,7 @@
         </tr>
       <% }) %>
       <% if (!attempts.length) { %>
-        <tr><td colspan="6" class="empty">No attempts match this filter.</td></tr>
+        <tr><td colspan="7" class="empty">No attempts match this filter.</td></tr>
       <% } %>
     </tbody>
   </table>

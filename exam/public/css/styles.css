@@ -406,10 +406,17 @@ tr:last-child td {
 
 .option-row {
   display: grid;
-  grid-template-columns: 80px minmax(220px, 1fr) 120px auto;
+  grid-template-columns: 80px minmax(220px, 1fr) 120px 110px;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.options-bulk-form,
+.new-options,
+.grade-form {
+  display: grid;
+  gap: 10px;
 }
 
 .checkbox-label {
@@ -426,6 +433,10 @@ tr:last-child td {
 
 .delete-form {
   margin: -4px 0 12px 88px;
+}
+
+.option-delete {
+  color: var(--danger);
 }
 
 .link-danger {
@@ -542,6 +553,22 @@ tr:last-child td {
   font-weight: 900;
 }
 
+.grade-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+  padding-top: 18px;
+}
+
+.grade-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 @media (max-width: 760px) {
   .topbar,
   .page-heading,
@@ -577,7 +604,8 @@ tr:last-child td {
     min-width: 720px;
   }
 
-  .option-row {
+  .option-row,
+  .grade-actions {
     grid-template-columns: 1fr;
   }
 
@@ -590,4 +618,17 @@ tr:last-child td {
     text-align: left;
     justify-content: flex-start;
   }
+}
+
+
+.score-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 6px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--accent-strong);
+  font-weight: 900;
+  padding: 4px 8px;
 }

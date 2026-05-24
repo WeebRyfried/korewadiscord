@@ -33,7 +33,9 @@ Host Nginx accepts the public domain and forwards to the project Docker Nginx. D
 ├── nginx/
 │   └── default.conf
 ├── wiki/
+│   ├── assets/
 │   ├── Dockerfile
+│   ├── extensions/
 │   ├── LocalSettings.override.php
 │   └── docker-entrypoint.sh
 ├── exam/
@@ -73,6 +75,8 @@ MEDIAWIKI_DB_ROOT_PASSWORD=<long-random-string>
 ```
 
 Do not commit `.env`.
+
+The wiki defaults to open editing: guests can create and edit pages when `MEDIAWIKI_ALLOW_ANON_EDIT=true`.
 
 Use `EXAM_COOKIE_SECURE=false` for local `http://localhost` testing. On the VPS, set `EXAM_COOKIE_SECURE=true` once Cloudflare is proxying HTTPS to `underground.korewadiscord.com`.
 
@@ -124,6 +128,12 @@ Open `/exam/admin` and log in with the credentials from `.env`.
 Create tests from the dashboard or the tests page. New tests start as `CLOSED` drafts. Edit title, description, instructions, status, timer duration, questions, options, option order, and correct answers. Set status to `OPENED` when the test is ready.
 
 Use the attempts page to filter submissions by test or Discord ID, inspect answers, and reset a user attempt for one specific test.
+
+## Wiki Admin Usage
+
+Open `/wiki/admin` or `/wiki/index.php/Special:WikiAdminDashboard` and log in with a wiki administrator account. The dashboard links to recent changes, logs, page management, uploads, user rights, account tools, protected pages, interface messages, and site styling pages.
+
+The wiki defaults to the MediaWiki `vector-2022` skin with responsive Vector styling enabled. If MobileFrontend is available in the MediaWiki image, mobile visitors use the Minerva mobile skin when available.
 
 ## Duplicate Attempt Rule
 

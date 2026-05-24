@@ -15,3 +15,7 @@ backups/
 
 .DS_Store
 Thumbs.db
+.codex-screenshots/
+
+wiki-backup-*/
+mcp_memory.jsonl

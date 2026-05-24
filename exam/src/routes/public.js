@@ -3,13 +3,14 @@ const {
   getOrCreateExamUser,
   getPublicTestsForUser,
   getTest,
-  getTestWithQuestions,
+  getTestWithAttemptQuestions,
   createOrResumeAttempt,
   getAttemptForUser,
   getAttemptAnswers,
   saveAnswer,
   submitAttempt
 } = require('../database');
+const { gradeSubmittedAttempt } = require('../scoring');
 
 function requireDiscord(req, res, next) {
   if (!req.session.discordId) {
@@ -19,7 +20,7 @@ function requireDiscord(req, res, next) {
   return next();
 }
 
-function createPublicRouter(db) {
+function createPublicRouter(db, config = {}) {
   const router = express.Router();
 
   router.get('/', (req, res) => {
@@ -96,7 +97,7 @@ function createPublicRouter(db) {
       return res.redirect(req.toUrl(`/attempts/${attempt.id}/complete`));
     }
 
-    const test = getTestWithQuestions(db, attempt.test_id);
+    const test = getTestWithAttemptQuestions(db, attempt.id);
     const answers = getAttemptAnswers(db, attempt.id);
 
     return res.render('public/attempt', {
@@ -121,9 +122,10 @@ function createPublicRouter(db) {
     }
   });
 
-  router.post('/attempts/:attemptId/submit', requireDiscord, (req, res, next) => {
+  router.post('/attempts/:attemptId/submit', requireDiscord, async (req, res, next) => {
     try {
       const attempt = submitAttempt(db, Number(req.params.attemptId), req.session.discordId);
+      await gradeSubmittedAttempt(db, config, attempt.id);
       return res.json({ ok: true, redirect: req.toUrl(`/attempts/${attempt.id}/complete`) });
     } catch (err) {
       return next(err);
